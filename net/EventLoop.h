@@ -12,6 +12,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include "TimerId.h"
+
 #include "../base/Thread.h"
 #include "../base/Mutex.h"
 #include "../base/Timestamp.h"
@@ -23,7 +25,7 @@ namespace summer
 		class Poller;
 		class Channel;
 		class TimerQueue;
-		class TimerId;
+		//class TimerId;
 
 		class EventLoop : boost::noncopyable
 		{

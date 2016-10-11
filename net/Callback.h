@@ -23,6 +23,11 @@ namespace net
 	typedef boost::function<void (const TcpConnectionPtr&, 
 					Buffer*,
 					Timestamp timestamp)> MessageCallback;
+	typedef boost::function<void (int sockfd)> NewConnectionCallback;
+
+	void defaultMessageCallback(const TcpConnectionPtr& tcpConnectionPtr,
+					Buffer* buf, Timestamp timestamp);
+	void defaultConnectionCallback(const TcpConnectionPtr& tcpConnectionPtr);
 }
 }
 
