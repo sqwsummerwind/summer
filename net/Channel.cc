@@ -2,6 +2,7 @@
 //qiangwei.su
 //
 #include <poll.h>
+#include <assert.h>
 
 #include "../base/Logging.h"
 #include "Channel.h"
@@ -19,19 +20,34 @@ Channel::Channel(EventLoop* loop, int fd)
 revents_(0),
 fd_(fd),
 loop_(loop),
-index_(-1)
+index_(-1),
+eventHandling(false)
 {}
+
+Channel::~Channel()
+{
+	assert(!eventHandling);
+}
 
 void Channel::update()
 {
 	loop_->updateChannel(this);
 }
 
-void Channel::handleEvent()
+void Channel::handleEvent(Timestamp receiveTime)
 {
+	eventHandling = true;
 	if(revents_ & POLLNVAL)
 	{
-		LOG_WARN <<"Channel::handleEvent() POLLNVAL";
+		LOG_WARN <<"Channel::handleEvent() POLLNVAL fd: "<< fd_ <<" ";
+	}
+
+	//peer client close 
+	if((revents_&POLLHUP)&&!(revents_&POLLIN))
+	{
+		LOG_WARN<<"Channel::handle_event() POLLHUP";
+		if(closeCallback_)
+				closeCallback_();
 	}
 
 	if(revents_ &(POLLERR | POLLNVAL))
@@ -43,7 +59,7 @@ void Channel::handleEvent()
 	if(revents_ & (POLLIN | POLLPRI | POLLRDHUP))
 	{
 		if(readCallback_)
-			readCallback_();
+			readCallback_(receiveTime);
 	}
 
 	if(revents_ & POLLOUT)
@@ -51,6 +67,7 @@ void Channel::handleEvent()
 		if(writeCallback_)
 			writeCallback_();
 	}
+	eventHandling = false;
 
 }
 

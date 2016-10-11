@@ -8,6 +8,8 @@
 
 #include "EventLoop.h"
 
+#include "../base/Timestamp.h"
+
 namespace summer
 {
 	namespace net
@@ -18,12 +20,14 @@ namespace summer
 		{
 			public:
 				typedef boost::function<void()> EventCallback;
+				typedef boost::function<void(Timestamp)> ReadEventCallback;
 
 				Channel(EventLoop* loop, int fd);
+				~Channel();
 
 				//handle event
-				void handleEvent();
-				void setReadCallback(const EventCallback& cb)
+				void handleEvent(Timestamp recetive);
+				void setReadCallback(const ReadEventCallback& cb)
 				{
 					readCallback_ = cb;
 				}
@@ -38,14 +42,36 @@ namespace summer
 					errorCallback_ = cb;
 				}
 
+				void setCloseCallback(const EventCallback& cb)
+				{
+					closeCallback_ = cb;
+				}
+
 				void enableReading()
 				{
 					events_ |= kReadEvent;
 					update();
 				}
-				//void enableWriting();
-				//void disableWriting();
-				//void disableAll();
+				void enableWriting()
+				{
+					events_ |= kWriteEvent;
+					update();
+				}
+				void disableWriting()
+				{
+					events_ &= ~kWriteEvent;
+					update();
+				}
+				void disableAll()
+				{
+					events_ = kNoneEvent;
+					update();
+				}
+
+				bool isWriting() const
+				{
+					return events_&kWriteEvent;
+				}
 				
 				int fd() const 
 				{
@@ -96,10 +122,12 @@ namespace summer
 				int fd_;	//fd connect to channel
 				EventLoop* loop_;
 				int index_;	//used by poller
+				bool eventHandling;
 
-				EventCallback readCallback_;
+				ReadEventCallback readCallback_;
 				EventCallback writeCallback_;
 				EventCallback errorCallback_;
+				EventCallback closeCallback_;
 		};
 	}
 }

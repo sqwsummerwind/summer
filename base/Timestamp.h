@@ -32,7 +32,7 @@ namespace summer
 			}
 
 			//get microSecondSinceEpoch_
-			int64_t microSecondSinceEpoch()
+			int64_t microSecondSinceEpoch() const
 			{
 				return microSecondSinceEpoch_;
 			}
@@ -55,14 +55,20 @@ namespace summer
 	};
 
 	//just operator <, operator > ,>= ,<= will generate auto
-	inline bool operator<(Timestamp& lt, Timestamp& rt)
+	inline bool operator< (Timestamp lt, Timestamp rt)
 	{
 		return lt.microSecondSinceEpoch() < rt.microSecondSinceEpoch();
 	}
 
-	inline bool operator==(Timestamp& lt, Timestamp& rt)
+	inline bool operator== (Timestamp lt, Timestamp rt)
 	{
 		return lt.microSecondSinceEpoch() == rt.microSecondSinceEpoch();
+	}
+
+	inline Timestamp addTime(Timestamp timestamp, double seconds)
+	{
+		int64_t delay = static_cast<int64_t>(Timestamp::kMicroSecondPerSecond * seconds);
+		return Timestamp(timestamp.microSecondSinceEpoch() + delay);
 	}
 
 }
