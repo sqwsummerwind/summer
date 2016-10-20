@@ -37,9 +37,9 @@ namespace
 	}
 }
 
-EventLoop::EventLoop()
-: looping_(false),
-  threadId_(CurrentThread::tid()),
+EventLoop::EventLoop():
+looping_(false),
+threadId_(CurrentThread::tid()),
 poller_(new Poller(this)),
 wakeupFd_(create_eventfd()),
 wakeupChannel_(new Channel(this, wakeupFd_)),
@@ -84,8 +84,12 @@ void EventLoop::loop()
 
 	while(!quit_)
 	{
+		
 		activeChannels_.clear();
 		poller_->poll(5*1000, &activeChannels_);
+		LOG_DEBUG<<"wakeup from poll, activeChannels size:"<<
+				activeChannels_.size()<<" pendingFunctor size :"
+				<<pendingFunctors_.size();
 		for(ChannelList::const_iterator it = activeChannels_.begin();
 						it<activeChannels_.end(); it++)
 		{
@@ -120,6 +124,12 @@ void EventLoop::queueInLoop(const Functor& functor)
 		MutexLockGuard lock(mutex_);
 		pendingFunctors_.push_back(functor);
 	}
+
+	if (isInLoopThread()&&callingPendingFunctor_)
+	{
+		LOG_TRACE<<"wakeup";
+		wakeup();
+	}
 }
 
 void EventLoop::doPendingFunctor()
@@ -145,6 +155,7 @@ void EventLoop::handleRead()
 {
 	uint64_t one;
 	ssize_t n = ::read(wakeupFd_, &one, sizeof(one));
+	LOG_DEBUG<<"wake up";
 	if(n != sizeof(one))
 	{
 		LOG_SYSERR<<"handleRead read "<< n <<"bytes instead of 8";
@@ -155,6 +166,7 @@ void EventLoop::wakeup()
 {
 	uint64_t one = 1;	//8 bytes
 	ssize_t n = ::write(wakeupFd_, &one, sizeof(one));
+	LOG_DEBUG<<"wakeupfd: "<<wakeupFd_;
 	if(n < 8)
 	{
 		LOG_SYSERR << "wakeup write "<<n<<" bytes instead of 8";

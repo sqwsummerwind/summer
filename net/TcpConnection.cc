@@ -38,13 +38,14 @@ TcpConnection::TcpConnection(EventLoop* loop,
 					boost::bind(&TcpConnection::handleClose, this));
 	channel_->setErrorCallback(
 					boost::bind(&TcpConnection::handleError, this));
-	LOG_DEBUG<<"TcpConnection::construtor, "<< "name "
-			<<name_<<" fd: "<<socket_;
+	LOG_DEBUG<<"TcpConnection::construtor, name: "
+			<<name_<<" fd: "<<sockfd;
 }
 
 void TcpConnection::handleRead(Timestamp receiveTime)
 {
 	
+	LOG_DEBUG<<"receiveTime: "<<receiveTime.toFormatString();
 	loop_->assertInLoopThread();
 	int savedErrno;
 	int nread = inputBuffer_.readFd(channel_->fd(), &savedErrno);
@@ -63,6 +64,7 @@ void TcpConnection::handleRead(Timestamp receiveTime)
 
 void TcpConnection::handleWrite()
 {
+	LOG_DEBUG<<"call handleWrite";
 	loop_->assertInLoopThread();
 	if(channel_->isWriting())
 	{
@@ -105,13 +107,16 @@ void TcpConnection::handleWrite()
 void TcpConnection::handleClose()
 {
 	loop_->assertInLoopThread();
-	assert(state_==kConnected);
-	//setState(kDisconnected);
+	//assert(state_==kConnected);
+	setState(kDisconnected);
 	
 	//socket destructor will close fd
 	channel_->disableAll();
 	//must the last line
+	LOG_DEBUG<<"before closeCallback_";
 	closeCallback_(shared_from_this());
+	LOG_DEBUG<<"after closeCallback_";
+	
 }
 
 void TcpConnection::handleError()
@@ -243,6 +248,7 @@ void TcpConnection::shutdownInLoop()
 
 void TcpConnection::connectionEstablished()
 {
+	LOG_DEBUG<<"connection established";
 	loop_->assertInLoopThread();
 	assert(state_ == kConnecting);
 	setState(kConnected);
@@ -250,6 +256,7 @@ void TcpConnection::connectionEstablished()
 
 	if(connectionCallback_)
 		connectionCallback_(shared_from_this());
+	LOG_DEBUG<<"after connectionCallback_";
 }
 
 void TcpConnection::connectionDestroyed()

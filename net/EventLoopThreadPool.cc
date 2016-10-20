@@ -48,12 +48,12 @@ EventLoop* EventLoopThreadPool::getNextLoop()
 {
 	baseLoop_->assertInLoopThread();
 	EventLoop* loop = baseLoop_;
-	assert(next_>=0 && next_<numThreads_);
+	assert(next_>=0 && next_<=numThreads_);
 	
 	if(!loops_.empty())
 	{
 		loop = loops_[next_];
-		next_++;
+		++next_;
 		if(next_ >= loops_.size())
 		{
 			next_ = 0;

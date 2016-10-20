@@ -47,7 +47,7 @@ namespace
 		uint64_t howlong = 1;
 		ssize_t n = ::read(timerfd, &howlong, sizeof(howlong));
 		
-		LOG_TRACE <<"TimerQueue::handleRead "<< howlong << " at ";
+		LOG_TRACE <<"TimerQueue::handleRead Timerfd read "<< howlong <<" successfully";
 		if(n != 8)
 		{
 			LOG_ERROR << "Timerfd read "<<n<<" bytes instead of 8";
@@ -123,7 +123,7 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
 			timers_.lower_bound(Entry(now, reinterpret_cast<Timer*>(UINTPTR_MAX)));
 	
 	Timestamp first = lower_it->first;
-	assert(lower_it != timers_.end() || now < first);
+	assert(lower_it == timers_.end() || now < first);
 
 	std::vector<Entry> expired;
 	std::copy(timers_.begin(), lower_it, std::back_inserter(expired));

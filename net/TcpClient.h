@@ -28,7 +28,7 @@ namespace net
 			TcpClient(EventLoop* loop,
 							const InetAddress& serverAddr, 
 							const std::string& name);
-			~TcpClient();
+			//~TcpClient();
 			void connect();
 			void disconnect();
 

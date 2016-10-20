@@ -151,7 +151,7 @@ void sockets::toHostPort(char* buf, size_t size,
 	//network fomat to 1.2.3.4
 	::inet_ntop(AF_INET, &addr.sin_addr, host, sizeof(host));
 	uint16_t port = networkToHost16(addr.sin_port);
-	snprintf(buf, sizeof(buf), "%s:%u", host, port);
+	snprintf(buf, size, "%s:%u", host, port);
 }
 
 void sockets::fromHostPort(const char* ip, uint16_t port,

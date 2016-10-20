@@ -40,11 +40,12 @@ void TcpServer::setThreadNum(int numThreads)
 
 void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 {
+	LOG_TRACE<<" new connection ";
 	//call getsocketname
 	InetAddress localAddr(sockets::getLocalAddr(sockfd));
 	
 	char buf[32];
-	snprintf(buf, sizeof(buf), ":%s %d", hostPort_.c_str(), nextConnId_);
+	snprintf(buf, sizeof(buf), ":%s-%d", hostPort_.c_str(), nextConnId_);
 	nextConnId_++;
 	std::string connName = name_ + buf;
 
@@ -57,7 +58,9 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 	conn->setWriteCompleteCallback(writeCompleteCallback_);
 	conn->setCloseCallback(
 			boost::bind(&TcpServer::removeConnection, this, _1));
+	LOG_DEBUG<<"call ioLoop->runInLoop(boost::bind(&TcpConnection::connectionEstablished, conn))";
 	ioLoop->runInLoop(boost::bind(&TcpConnection::connectionEstablished, conn));
+	connections_[connName] = conn;
 }
 
 void TcpServer::start()
@@ -89,7 +92,7 @@ void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& conn)
 	assert(n == 1);
 	(void)n;
 	EventLoop* ioLoop = conn -> getLoop();
-	ioLoop->runInLoop(
+	ioLoop->queueInLoop(
 			boost::bind(&TcpConnection::connectionDestroyed, conn));
 }
 

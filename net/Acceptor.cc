@@ -11,6 +11,8 @@
 #include "Channel.h"
 #include "SocketOpts.h"
 
+#include "../base/Logging.h"
+
 using namespace summer;
 using namespace summer::net;
 
@@ -36,6 +38,7 @@ void Acceptor::listen()
 
 void Acceptor::handleRead()
 {
+	LOG_TRACE<<" accept new one ";
 	loop_->assertInLoopThread();
 	InetAddress peerAddr(0);
 	int connfd = acceptSocket_.accept(&peerAddr);

@@ -27,7 +27,8 @@ void Poller::updateChannel(Channel* channel)
 {
 	//call in loop thread;
 	assertInLoopThread();
-	if(channel->index())
+	//LOG_DEBUG<<"channel:index = "<<channel->index()<<" fd = "<<channel->fd();
+	if(channel->index() == -1)
 	{
 		//add new channel
 		assert(channels_.find(channel->fd()) == channels_.end());
@@ -39,6 +40,8 @@ void Poller::updateChannel(Channel* channel)
 		int idx = static_cast<int>(pollfds_.size())-1;
 		channel->set_index(idx);
 		channels_[pfd.fd] = channel;
+		
+		LOG_DEBUG<<"channel:index = "<<channel->index()<<" fd = "<<channel->fd();
 	}
 	else
 	{
@@ -57,6 +60,7 @@ void Poller::updateChannel(Channel* channel)
 			//ignore this pollfd
 			pfd.fd = -channel->fd() - 1;
 		}
+		LOG_DEBUG<<"channel:index = "<<channel->index()<<" fd = "<<channel->fd();
 	}
 }
 
@@ -98,7 +102,7 @@ Timestamp Poller::poll(int timeoutMs, ChannelList* activeChannels)
 	Timestamp now(Timestamp::now());
 	if(numEvents > 0)
 	{	
-		LOG_TRACE<<numEvents<<"events happens";
+		LOG_TRACE<<numEvents<<" events happens";
 		fillActiveChannels(numEvents, activeChannels);
 	}
 	else if(numEvents == 0)
@@ -115,14 +119,19 @@ Timestamp Poller::poll(int timeoutMs, ChannelList* activeChannels)
 
 void Poller::fillActiveChannels(int numEvents, ChannelList* activeChannels) const
 {
-	for(PollFdList::const_iterator it = pollfds_.begin();it!=pollfds_.end()&&numEvents>0;it++)
+	for(PollFdList::const_iterator it = pollfds_.begin();
+					it != pollfds_.end() && numEvents > 0; it++)
 	{
 		if(it->revents>0)
 		{
-			numEvents--;
+			--numEvents;
 			ChannelMap::const_iterator ch = channels_.find(it->fd);
 			assert(ch!=channels_.end());
 			Channel* channel = ch->second;
+			LOG_DEBUG<<"channels_ size:"<<channels_.size()<<
+					" channel->index():"<<channel->index()<<
+					" channel->fd():"<<channel->fd()<<
+					" it->fd:"<<it->fd;
 			assert(channel->fd()==it->fd);
 			channel->set_revents(it->revents);
 			activeChannels->push_back(channel);

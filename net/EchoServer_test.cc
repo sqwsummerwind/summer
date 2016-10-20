@@ -95,6 +95,7 @@ int main(int argc, char** argv)
 
 	EventLoop loop;
 	InetAddress listenAddr(2016);
+	LOG_DEBUG<<"listenAddr :"<<listenAddr.toHostPort();
 	EchoServer echoServer(&loop, listenAddr);
 	
 	echoServer.start();

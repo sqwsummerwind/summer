@@ -9,6 +9,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/any.hpp>
 
 #include "Callback.h"
 #include "Buffer.h"
@@ -32,7 +33,7 @@ namespace net
 			TcpConnection(EventLoop* loop,const std::string& name,
 							int sockfd, const InetAddress& peerAddr,
 							const InetAddress& localAddr);
-			~TcpConnection();
+			//~TcpConnection();
 
 			EventLoop* getLoop() const
 			{
@@ -77,6 +78,21 @@ namespace net
 			void setMessageCallback(const MessageCallback& cb)
 			{
 				messageCallback_ = cb;
+			}
+
+			void setContext(const boost::any& context)
+			{
+				context_ = context;
+			}
+
+			boost::any& getContext()
+			{
+				return context_;
+			}
+
+			const boost::any& getContext() const
+			{
+				return context_;
 			}
 
 			void send(const std::string& message);
@@ -126,6 +142,7 @@ namespace net
 			WriteCompleteCallback writeCompleteCallback_;
 			MessageCallback messageCallback_;
 			CloseCallback closeCallback_;
+			boost::any context_;
 
 			Buffer inputBuffer_;
 			Buffer outputBuffer_;

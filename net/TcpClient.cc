@@ -18,6 +18,22 @@
 using namespace summer;
 using namespace summer::net;
 
+namespace summer
+{
+namespace net
+{
+	void defaultMessageCallback(const TcpConnectionPtr& conn, Buffer* buf, Timestamp timestamp)
+	{
+		LOG_TRACE<<"defaultMessageCallback";	
+	}
+
+	void defaultConnectionCallback(const TcpConnectionPtr& conn)
+	{
+		LOG_TRACE<<"defaultMessageCallback";
+	}
+}
+
+}
 TcpClient::TcpClient(EventLoop* loop, 
 				const InetAddress& serverAddr,
 				const std::string& name):
@@ -45,7 +61,7 @@ void TcpClient::connect()
 //close the write side
 void TcpClient::disconnect()
 {
-	LOG_INFO<<"TcpClient::disconnec["<<name_<<"]";
+	LOG_INFO<<"TcpClient::disconnect["<<name_<<"]";
 	connect_ = false;
 	{
 		MutexLockGuard lock(mutex_);
@@ -93,7 +109,7 @@ void TcpClient::removeConnection(const TcpConnectionPtr& conn)
 		connection_.reset();
 	}
 
-	loop_->runInLoop(boost::bind(
+	loop_->queueInLoop(boost::bind(
 					&TcpConnection::connectionDestroyed, conn));
 
 	if(retry_&&connect_)

@@ -54,6 +54,7 @@ void Connector::startInLoop()
 	int sockfd = sockets::createNonblockingOrDie();
 	int ret = sockets::connect(sockfd, serverAddr_.getInetAddr());
 	int savedErrno = (ret==0) ? 0 : errno;
+	LOG_DEBUG<<"errno = "<<savedErrno;
 	switch(savedErrno)
 	{
 		case 0:
@@ -93,6 +94,7 @@ void Connector::startInLoop()
 void Connector::connecting(int sockfd)
 {
 	//assert(state_ == kDisConnected);
+	LOG_TRACE<<"connecting sockfd:"<<sockfd;
 	setState(kConnecting);
 	assert(!channel_);
 	channel_.reset(new Channel(loop_, sockfd));
@@ -111,31 +113,39 @@ int Connector::removeAndResetChannel()
 	channel_->disableAll();
 	int sockfd = channel_->fd();
 	loop_->removeChannel(channel_.get());
-	loop_->runInLoop(
+	loop_->queueInLoop(
 			boost::bind(&Connector::resetChannel, this));
 	return sockfd;
 }
 
 void Connector::resetChannel()
 {
+	LOG_DEBUG<<"resetChannel";
 	channel_.reset();
 }
 
 void Connector::handleWrite()
 {
 	LOG_TRACE<<"Connector::handleWrite";
-	assert(state_ == kConnecting);
-	int sockfd = removeAndResetChannel();
-	//judge weather the connection is self connection
-	if(sockets::isSelfConnect(sockfd))
+	//assert(state_ == kConnecting);
+
+	if(state_ == kConnecting)
 	{
-		LOG_WARN<<"Connector::handleWrite -- self connection";
-		retry(sockfd);
-	}
-	else
-	{
-		setState(kConnected);
-		newConnectionCallback_(sockfd);
+	
+		int sockfd = removeAndResetChannel();
+		//judge weather the connection is self connection
+		if(sockets::isSelfConnect(sockfd))
+		{
+			LOG_WARN<<"Connector::handleWrite -- self connection";
+			retry(sockfd);
+		}
+		else
+		{
+			setState(kConnected);
+			newConnectionCallback_(sockfd);
+		}
+	}else{
+		assert(state_ == kDisConnected);
 	}
 
 }
@@ -155,7 +165,7 @@ void Connector::handleError()
 void Connector::retry(int sockfd)
 {
 	sockets::close(sockfd);
-	setState(state_ = kDisConnected);
+	setState(kDisConnected);	
 	LOG_INFO<<"Connector::retry -- retry connecting to "<<
 			serverAddr_.toHostPort() << " in "<<retryDelayMs_<<" millseconds";
 	loop_->runAfter(static_cast<double>(retryDelayMs_)/1000, boost::bind(&Connector::startInLoop, this));
