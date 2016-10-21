@@ -22,6 +22,8 @@ namespace summer
 				typedef boost::function<void()> EventCallback;
 				typedef boost::function<void(Timestamp)> ReadEventCallback;
 
+				static const int kNoneEvent;
+				
 				Channel(EventLoop* loop, int fd);
 				~Channel();
 
@@ -113,7 +115,6 @@ namespace summer
 
 				void update();
 
-				static const int kNoneEvent;
 				static const int kReadEvent;
 				static const int kWriteEvent;
 

@@ -40,7 +40,7 @@ namespace
 EventLoop::EventLoop():
 looping_(false),
 threadId_(CurrentThread::tid()),
-poller_(new Poller(this)),
+poller_(Poller::newDefaultPoller(this)),
 wakeupFd_(create_eventfd()),
 wakeupChannel_(new Channel(this, wakeupFd_)),
 callingPendingFunctor_(false),
